@@ -121,16 +121,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 'assets/logo.png', 
                 height: 100,
               ),
-              const Center(
-                child: Text(
-                  'VINILOTECA',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
               const SizedBox(height: 40),
               const Text(
                 'Inicia sesión',

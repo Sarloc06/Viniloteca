@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
-import 'main.dart'; // <-- ¡IMPORTANTE! Añadido para que conozca HomeScreen
+import 'home_screen.dart'; // <-- IMPORTANTE: Ahora importa 'home_screen.dart'
+import 'package:viniloteca/login_screen.dart'; // Importa LoginScreen
 
-// --- WIDGET DE LA CABECERA (LOGO NAVEGABLE) ---
+// --- WIDGET DE LA CABECERA (Copia idéntica a la de home_screen.dart) ---
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const MyAppBar({super.key});
+  
+  final String? nombreUsuario; // Acepta el usuario
+
+  const MyAppBar({
+    super.key, 
+    this.nombreUsuario // Constructor
+  });
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final logoHeight = screenWidth * 0.2;
-    final iconSize = screenWidth * 0.09;
-
+    // ... (El código de MyAppBar es EXACTAMENTE EL MISMO que en home_screen.dart) ...
+    // ... (Incluyendo _buildLoginIcon y _buildProfileMenu) ...
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFFe6d5b5),
@@ -27,51 +32,99 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
             Expanded(
               flex: 1,
               child: IconButton(
-                icon: Icon(Icons.menu, size: iconSize, color: Colors.black),
-                onPressed: () {
+                icon: const Icon(Icons.menu, size: 35, color: Colors.black),
+                onPressed: () { 
                   if (Navigator.canPop(context)) {
-                    Navigator.pop(context); // Vuelve a la pantalla anterior
+                    Navigator.pop(context);
+                  } else {
+                    print('Menú presionado'); 
                   }
-                  print('Menú presionado');
                 },
               ),
             ),
-            
-            // --- CAMBIO AQUÍ ---
             Expanded(
               flex: 2,
-              child: GestureDetector( // 1. Envuelto con GestureDetector
-                onTap: () { // 2. Añadida la acción onTap
+              child: GestureDetector(
+                onTap: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
-                    (Route<dynamic> route) => false, // Borra todas las rutas
+                    MaterialPageRoute(
+                      // Navega a HomeScreen (que está en home_screen.dart)
+                      builder: (context) => HomeScreen(nombreUsuario: nombreUsuario),
+                    ),
+                    (route) => false,
                   );
                 },
-                child: Padding( // 3. El logo original
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0), 
                   child: Image.asset(
                     'assets/logo.png',
                     fit: BoxFit.contain,
-                    height: logoHeight,
+                    height: 75,
                   ),
                 ),
               ),
             ),
-            // --- FIN DEL CAMBIO ---
+            (nombreUsuario == null)
+              ? _buildLoginIcon(context)
+              : _buildProfileMenu(context, nombreUsuario!),
+          ],
+        ),
+      ),
+    );
+  }
 
-            Expanded(
-              flex: 1,
-              child: InkWell(
-                onTap: () {
-                  print('Perfil presionado');
-                },
-                child: Container(
-                  height: double.infinity,
-                  color: Colors.red,
-                  child: Icon(Icons.person, size: iconSize, color: Colors.white),
-                ),
+  // WIDGET PARA INVITADO
+  Widget _buildLoginIcon(BuildContext context) {
+    return Expanded(
+      flex: 1,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        },
+        child: Container(
+          height: double.infinity, 
+          color: Colors.red,
+          child: const Icon(Icons.person, size: 35, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  // WIDGET PARA USUARIO LOGUEADO
+  Widget _buildProfileMenu(BuildContext context, String nombre) {
+    return Expanded(
+      flex: 1,
+      child: Container(
+        height: double.infinity,
+        color: Colors.red,
+        child: PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'logout') {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen(nombreUsuario: null)), 
+                (route) => false,
+              );
+            }
+          },
+          icon: const Icon(Icons.person, size: 35, color: Colors.white),
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            PopupMenuItem<String>(
+              enabled: false, 
+              child: Text(
+                nombre,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
               ),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+
+              value: 'logout',
+              child: Text('Cerrar Sesión'),
             ),
           ],
         ),
@@ -79,18 +132,27 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  
   @override
-  Size get preferredSize => const Size.fromHeight(100.0);
+  Size get preferredSize => const Size.fromHeight(100.0); 
 }
 
-// --- PANTALLA DE LISTA DE TIENDAS (Sin cambios aquí) ---
+
+// --- PANTALLA DE LISTA DE TIENDAS (ACTUALIZADA) ---
 class StoreListPage extends StatelessWidget {
-  const StoreListPage({super.key});
+  
+  final String? nombreUsuario; // <-- ACEPTA EL USUARIO
+
+  const StoreListPage({
+    super.key, 
+    this.nombreUsuario // <-- CONSTRUCTOR ACTUALIZADO
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MyAppBar(), // Usa la cabecera actualizada
+      // Pasa el usuario al AppBar de esta página
+      appBar: MyAppBar(nombreUsuario: nombreUsuario), 
       backgroundColor: const Color(0xFF800000),
       body: SingleChildScrollView(
         child: Column(
@@ -116,7 +178,7 @@ class StoreListPage extends StatelessWidget {
     );
   }
 
-  // Helper (Sin cambios)
+  // --- Helper para la Barra de Búsqueda ---
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -127,7 +189,7 @@ class StoreListPage extends StatelessWidget {
           hintText: "Buscar...",
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide.none, 
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
@@ -139,17 +201,19 @@ class StoreListPage extends StatelessWidget {
     );
   }
 
-  // Helper (Sin cambios)
-  Widget _buildStoreCard(
-      {required String title,
-      required int rating,
-      required String tags,
-      required String imagePath}) {
+  // --- Helper para las Tarjetas de Tienda ---
+  Widget _buildStoreCard({
+    required String title,
+    required int rating,
+    required String tags,
+    required String imagePath,
+  }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- Columna Izquierda: Imagen y Puntos ---
           Expanded(
             flex: 2,
             child: Stack(
@@ -160,14 +224,13 @@ class StoreListPage extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      height: 120,
+                      height: 120, 
                       color: Colors.grey,
-                      child: const Center(
-                          child:
-                              Text('Error', style: TextStyle(color: Colors.red))),
+                      child: const Center(child: Text('Error', style: TextStyle(color: Colors.red))),
                     );
                   },
                 ),
+                // Puntos de paginación (simulados)
                 Positioned(
                   bottom: 8.0,
                   child: Row(
@@ -183,6 +246,8 @@ class StoreListPage extends StatelessWidget {
               ],
             ),
           ),
+
+          // --- Columna Derecha: Información ---
           Expanded(
             flex: 3,
             child: Padding(
@@ -190,6 +255,7 @@ class StoreListPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Título
                   Text(
                     title,
                     style: const TextStyle(
@@ -199,6 +265,7 @@ class StoreListPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
+                  // Rating (Estrellas y texto)
                   Row(
                     children: [
                       ...List.generate(5, (index) {
@@ -219,6 +286,7 @@ class StoreListPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
+                  // Tags
                   Text(
                     tags,
                     style: const TextStyle(
@@ -228,6 +296,7 @@ class StoreListPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  // Descripción
                   const Text(
                     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text of the printing...",
                     style: TextStyle(
@@ -246,7 +315,7 @@ class StoreListPage extends StatelessWidget {
     );
   }
 
-  // Helper (Sin cambios)
+  // --- Helper para los puntos de paginación ---
   Widget _buildDot({bool isActive = false}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4.0),
