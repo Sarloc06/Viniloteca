@@ -1,16 +1,9 @@
-# vinilotecas
+# viniloteca
 
-A new Flutter project.
+El propósito principal de la aplicación es facilitar a los usuarios la búsqueda de tiendas donde puedan adquirir los vinilos y
+productos musicales que más se ajusten a sus gustos. La plataforma tendrá un enfoque comunitario, permitiendo que los propios usuarios
+añadan información sobre los comercios, incluyendo descripciones, etiquetas y reseñas. Para participar activamente en estas funciones,
+será necesario iniciar sesión en la aplicación.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Además, la aplicación contará con una segunda funcionalidad como foro, en el que se podrán tratar temas relacionados con la búsqueda de vinilos,
+recomendaciones, experiencias en conciertos y la exhibición de colecciones personales.
