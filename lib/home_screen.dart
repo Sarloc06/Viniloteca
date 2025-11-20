@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:viniloteca/login_screen.dart'; // Para navegar a Login
 import 'tiendas.dart'; // Importa la página de tiendas
+import 'foros.dart';
 
 // --- WIDGET DE LA CABECERA (ACTUALIZADO) ---
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -179,15 +180,21 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Tarjeta 2: FOROS
-                _buildMenuCard(
-                  context: context, 
-                  label: 'FOROS',
-                  imagePath: 'assets/imagenFondo1.png',
-                  onTap: () {
-                    print('Navegar a Foros');
-                  },
-                ),
+              _buildMenuCard(
+                context: context, 
+                label: 'FOROS',
+                imagePath: 'assets/imagenFondo1.png',                
+                // --- AQUÍ ESTÁ EL CAMBIO ---
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      // Pasamos el nombreUsuario para mantener la sesión en la cabecera
+                      builder: (context) => ForumListPage(nombreUsuario: nombreUsuario),
+                    ),
+                  );
+                },
+              ),
               ],
             ),
           ),
