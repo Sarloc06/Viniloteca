@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:viniloteca/login_screen.dart'; 
 import 'package:viniloteca/profile_screen.dart'; // Importa la pantalla de perfil
+import 'tiendas.dart'; // <-- IMPORTANTE: Importa Tiendas
+import 'foros.dart';   // <-- IMPORTANTE: Importa Foros
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? nombreUsuario;
@@ -23,15 +25,29 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
               flex: 1,
               child: IconButton(
                 icon: const Icon(Icons.menu, size: 35, color: Colors.black),
-                onPressed: () {},
+                onPressed: () {
+                  // Si hay historial de navegación (ej: estamos en tiendas), volvemos atrás
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                },
               ),
             ),
-            // Logo
+            // Logo (Interactivo para volver a Inicio)
             Expanded(
               flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0), 
-                child: Image.asset('assets/logo.png', fit: BoxFit.contain, height: 75),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomeScreen(nombreUsuario: nombreUsuario, userId: userId)),
+                    (route) => false,
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0), 
+                  child: Image.asset('assets/logo.png', fit: BoxFit.contain, height: 75),
+                ),
               ),
             ),
             // Perfil (Invitado o Logueado)
@@ -117,12 +133,42 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 30),
+                
+                // TARJETA TIENDAS
                 _buildMenuCard(
-                  context: context, label: 'TIENDAS', imagePath: 'assets/imagen.png', hasBorder: false, onTap: () {},
+                  context: context, 
+                  label: 'TIENDAS', 
+                  imagePath: 'assets/imagen.png', 
+                  hasBorder: false, // <-- CAMBIO: Borde desactivado
+                  onTap: () {
+                    // NAVEGACIÓN A TIENDAS
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        // Pasamos el usuario para mantener la sesión
+                        builder: (context) => StoreListPage(nombreUsuario: nombreUsuario),
+                      ),
+                    );
+                  },
                 ),
+                
                 const SizedBox(height: 30),
+                
+                // TARJETA FOROS
                 _buildMenuCard(
-                  context: context, label: 'FOROS', imagePath: 'assets/imagenFondo1.png', hasBorder: false, onTap: () {},
+                  context: context, 
+                  label: 'FOROS', 
+                  imagePath: 'assets/imagenFondo1.png', 
+                  hasBorder: false, 
+                  onTap: () {
+                    // NAVEGACIÓN A FOROS
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ForumListPage(nombreUsuario: nombreUsuario),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
