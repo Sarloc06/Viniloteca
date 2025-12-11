@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; // Importar http
-import 'dart:convert'; // Importar convert
-import 'home_screen.dart'; // Para el AppBar
-import 'tiendas.dart';     // Para acceder a la clase Store
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Para detectar si es Web o Móvil
+import 'home_screen.dart'; 
+import 'tiendas.dart';     
 
-// Definimos la clase Review aquí localmente
+// Definimos la clase Review localmente
 class Review {
   final String user;
   final String userId;
@@ -22,15 +23,20 @@ class Review {
     required this.avatarColor,
   });
 
-  // Método factory para crear una Review desde JSON (Base de datos)
+  // --- TRADUCTOR DE BASE DE DATOS ---
+  // Aquí es donde convertimos las columnas de MySQL a tu App
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
-      user: json['user'] ?? 'Anónimo',
-      userId: json['userId'] ?? '#0000',
-      date: json['date'] ?? '',
-      text: json['text'] ?? '',
-      rating: json['rating'] ?? 5,
-      avatarColor: Colors.blueAccent, // Color por defecto al cargar
+      // Si la BD no manda nombre, ponemos 'Anónimo'
+      user: json['nombre_usuario'] ?? 'Usuario', 
+      // Convertimos el ID numérico a formato visual "#15"
+      userId: json['id_usuario'] != null ? "#${json['id_usuario']}" : '#0000',
+      date: json['fecha'] ?? '', // Si tu BD no tiene fecha, saldrá vacía
+      // IMPORTANTE: Mapeamos 'texto' (BD) a 'text' (Flutter)
+      text: json['texto'] ?? json['text'] ?? '', 
+      // IMPORTANTE: Mapeamos 'valoracion' (BD) a 'rating' (Flutter)
+      rating: (json['valoracion'] ?? json['rating'] ?? 5),
+      avatarColor: Colors.blueAccent, 
     );
   }
 }
@@ -38,11 +44,13 @@ class Review {
 class InfoTiendaScreen extends StatefulWidget {
   final Store store;
   final String? nombreUsuario;
+  final int? userId; // <--- 1. AÑADIDO: Necesario para guardar reseñas
 
   const InfoTiendaScreen({
     super.key, 
     required this.store, 
-    this.nombreUsuario
+    this.nombreUsuario,
+    this.userId, // <--- 2. AÑADIDO
   });
 
   @override
@@ -51,52 +59,69 @@ class InfoTiendaScreen extends StatefulWidget {
 
 class _InfoTiendaScreenState extends State<InfoTiendaScreen> {
 
-  // URL del Backend (Igual que en tu perfil: usa 10.0.2.2 para emulador Android)
-  final String baseUrl = "http://localhost:3000"; 
+  // --- DETECCIÓN AUTOMÁTICA DE URL ---
+  String get baseUrl {
+    if (kIsWeb) return "http://localhost:3000";
+    return "http://10.0.2.2:3000";
+  }
   
-  List<Review> _reviews = []; // Lista vacía, se llenará desde la BD
-  bool _isLoading = true; // Para mostrar carga inicial
+  List<Review> _reviews = []; 
+  bool _isLoading = true; 
 
   @override
   void initState() {
     super.initState();
-    _fetchReviews(); // Cargar reseñas al entrar
+    _fetchReviews(); 
   }
 
-  // --- OBTENER RESEÑAS DE LA BASE DE DATOS ---
+  // --- OBTENER RESEÑAS (MODIFICADO PARA USAR ID) ---
   Future<void> _fetchReviews() async {
     try {
-      // Simulamos la URL: /reviews?store=NombreTienda
-      // Asegúrate de que tu backend tenga este endpoint
-      final response = await http.get(Uri.parse('$baseUrl/reviews?store=${widget.store.title}'));
+      // Usamos el ID de la tienda (ej: 1) en vez del nombre
+      final url = Uri.parse('$baseUrl/reviews?id_tienda=${widget.store.id}');
+      print("Cargando reseñas desde: $url");
+
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        
         if (data['success'] == true) {
           final List<dynamic> reviewsJson = data['data'];
-          setState(() {
-            _reviews = reviewsJson.map((json) => Review.fromJson(json)).toList();
-            _isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              _reviews = reviewsJson.map((json) => Review.fromJson(json)).toList();
+              _isLoading = false;
+            });
+          }
         } else {
-          setState(() => _isLoading = false);
+          if (mounted) setState(() => _isLoading = false);
         }
       } else {
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
         print("Error al cargar reseñas: ${response.statusCode}");
       }
     } catch (e) {
       print("Error conexión: $e");
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // --- GUARDAR RESEÑA EN LA BASE DE DATOS ---
+  // --- GUARDAR RESEÑA (MODIFICADO PARA ENVIAR IDs) ---
   Future<void> _postReview(String text, int rating) async {
-    // 1. Añadimos visualmente primero (Optimistic UI)
+    
+    // Validamos que el usuario esté logueado
+    if (widget.userId == null) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error: Reinicia la app e inicia sesión de nuevo.")),
+      );
+      return;
+    }
+
+    // 1. Optimistic UI (Se añade visualmente al instante)
     final newReview = Review(
-      user: widget.nombreUsuario!,
-      userId: "#User", 
+      user: widget.nombreUsuario ?? "Yo",
+      userId: "#${widget.userId}", 
       date: "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
       text: text,
       rating: rating,
@@ -108,29 +133,32 @@ class _InfoTiendaScreenState extends State<InfoTiendaScreen> {
     });
 
     try {
-      // 2. Enviamos al backend
+      // 2. Enviamos al backend con los nombres de columnas correctos
+      final bodyData = {
+          'id_tienda': widget.store.id,  // <--- Enviamos ID (número)
+          'id_usuario': widget.userId,   // <--- Enviamos ID (número)
+          'text': text,
+          'rating': rating,
+      };
+
       final response = await http.post(
         Uri.parse('$baseUrl/add_review'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'store': widget.store.title,
-          'user': widget.nombreUsuario,
-          'text': text,
-          'rating': rating,
-          'date': newReview.date,
-        }),
+        body: jsonEncode(bodyData),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("¡Reseña guardada en la base de datos!"), backgroundColor: Colors.green),
         );
       } else {
+        print("Error Backend: ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Error al guardar en el servidor"), backgroundColor: Colors.orange),
         );
       }
     } catch (e) {
+      print("Excepción: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error de conexión: $e"), backgroundColor: Colors.red),
       );
@@ -139,7 +167,7 @@ class _InfoTiendaScreenState extends State<InfoTiendaScreen> {
 
   // Método para verificar sesión
   bool _verificarSesion() {
-    if (widget.nombreUsuario == null) {
+    if (widget.userId == null) { // Verificamos por ID, es más seguro
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("🔒 Inicia sesión para dejar una reseña"),
@@ -202,7 +230,6 @@ class _InfoTiendaScreenState extends State<InfoTiendaScreen> {
                   onPressed: () {
                     if (textController.text.isNotEmpty) {
                       Navigator.pop(context); // Cerrar diálogo primero
-                      // Llamamos a la función que guarda en la BD
                       _postReview(textController.text, rating.toInt());
                     }
                   },
@@ -219,7 +246,7 @@ class _InfoTiendaScreenState extends State<InfoTiendaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppBar(nombreUsuario: widget.nombreUsuario),
+      appBar: MyAppBar(nombreUsuario: widget.nombreUsuario, userId: widget.userId),
       backgroundColor: const Color(0xFFE6D5B5), 
       body: SingleChildScrollView(
         child: Column(
@@ -343,10 +370,10 @@ class _InfoTiendaScreenState extends State<InfoTiendaScreen> {
 
                   // LISTA DE RESEÑAS CON CARGA
                   if (_isLoading)
-                     const Padding(
-                       padding: EdgeInsets.all(20.0),
-                       child: CircularProgressIndicator(color: Colors.white),
-                     )
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
                   else if (_reviews.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(20.0),

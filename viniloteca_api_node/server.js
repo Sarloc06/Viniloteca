@@ -211,50 +211,40 @@ app.post('/upload_profile_picture', upload.single('image'), (req, res) => {
 
 // 6. OBTENER RESEÑAS
 app.get('/reviews', (req, res) => {
-    const storeName = req.query.store;
-    // Seleccionamos las reseñas de esa tienda
-    const sql = "SELECT * FROM RESENAS WHERE tienda = ? ORDER BY id DESC";
-    
-    db.query(sql, [storeName], (err, results) => {
-        if (err) {
-            console.error("Error obteniendo reseñas:", err);
-            return res.json({ success: false, data: [] });
-        }
-        
-        // Mapeamos para que coincida con el formato que espera Flutter (Review.fromJson)
-        const reviewsFormatted = results.map(row => ({
-            user: row.usuario,
-            userId: "#User", // En un futuro podrías guardar el ID real
-            date: row.fecha,
-            text: row.texto,
-            rating: row.rating
-        }));
+    // 1. Recibimos el ID de la tienda (ej: 1)
+    const idTienda = req.query.id_tienda; 
 
-        res.json({
-            success: true,
-            data: reviewsFormatted
-        });
+    // 2. CORRECCIÓN: Cambiamos 'WHERE tienda = ?' por 'WHERE id_tienda = ?'
+    // Quitamos el 'ORDER BY id DESC' para que no falle
+const sql = "SELECT * FROM RESENAS WHERE id_tienda = ?";
+
+    db.query(sql, [idTienda], (err, result) => {
+        if (err) {
+            console.log("Error: " + err); // Para ver el error en consola si pasa algo
+            res.status(500).send({ success: false, message: 'Error' });
+        } else {
+            res.send({ success: true, data: result });
+        }
     });
 });
 
 // 7. GUARDAR RESEÑA
 app.post('/add_review', (req, res) => {
-    const { store, user, text, rating, date } = req.body;
+    // 1. Recibimos los datos (asegúrate de que Flutter envía estos nombres)
+    const { id_tienda, id_usuario, text, rating } = req.body;
 
-    if (!store || !user || !text) {
-        return res.status(400).json({ success: false, message: "Datos incompletos" });
-    }
+    console.log("Intentando guardar reseña:", req.body); // Chivato para ver qué llega
 
-    const sql = "INSERT INTO RESENAS (tienda, usuario, texto, rating, fecha) VALUES (?, ?, ?, ?, ?)";
-    
-    db.query(sql, [store, user, text, rating, date], (err, result) => {
+    // 2. CONSULTA SQL ACTUALIZADA
+    const sql = "INSERT INTO RESENAS (id_tienda, id_usuario, texto, valoracion, likes, dislikes) VALUES (?, ?, ?, ?, 0, 0)";
+
+    db.query(sql, [id_tienda, id_usuario, text, rating], (err, result) => {
         if (err) {
-            console.error("Error guardando reseña:", err);
-            return res.status(500).json({ success: false, message: "Error BD" });
+            console.log("Error SQL:", err);
+            res.status(500).send({ message: 'Error al guardar en BD' });
+        } else {
+            res.send({ success: true, message: 'Reseña guardada correctamente' });
         }
-        
-        console.log(`📝 Nueva reseña en MySQL para ${store}`);
-        res.json({ success: true, message: "Reseña guardada" });
     });
 });
 

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart'; // Importa donde tengas tu MyAppBar
-import 'InfoTiendaScreen.dart'; // <-- IMPORTANTE: Para navegar al detalle
+import 'home_screen.dart'; 
+import 'InfoTiendaScreen.dart'; 
 
-// 1. MODELO DE DATOS (La estructura de una tienda)
+// 1. MODELO DE DATOS
+// He añadido 'final int id' para que la base de datos funcione.
+// Visualmente no cambia nada.
 class Store {
+  final int id; // <--- NECESARIO PARA LA BASE DE DATOS
   final String title;
   final int rating;
   final String tags;
@@ -11,6 +14,7 @@ class Store {
   final String description;
 
   Store({
+    required this.id, // <--- AHORA REQUERIDO
     required this.title,
     required this.rating,
     required this.tags,
@@ -19,32 +23,36 @@ class Store {
   });
 }
 
-// 2. PANTALLA CON ESTADO (StatefulWidget)
+// 2. PANTALLA CON ESTADO
 class StoreListPage extends StatefulWidget {
   final String? nombreUsuario;
+  final int? userId; 
 
-  const StoreListPage({super.key, this.nombreUsuario});
+  const StoreListPage({super.key, this.nombreUsuario, this.userId});
 
   @override
   State<StoreListPage> createState() => _StoreListPageState();
 }
 
 class _StoreListPageState extends State<StoreListPage> {
-  // --- DATOS SIMULADOS ---
+  // --- TUS DATOS ---
+  // He añadido el ID a cada tienda. Asegúrate de que coincida con tu Base de Datos.
   final List<Store> _allStores = [
     Store(
+      id: 1, // <--- ID 1 (Base de Datos)
       title: "Latimore Records",
       rating: 3,
       tags: "pop, rock, indie, vinilos, clásicos",
-      imagePath: "assets/store1.png",
-      description: "Lorem Ipsum is simply dummy text of the printing industry...",
+      imagePath: "assets/Latimore.jpg",
+      description: "Una tienda clásica en el corazón de la ciudad con una gran colección de vinilos vintage.",
     ),
     Store(
+      id: 2, // <--- ID 2 (Base de Datos)
       title: "TotemTanz",
-      rating: 4,
-      tags: "hip hop, rap, urban, moderno",
-      imagePath: "assets/store2.png",
-      description: "Tienda especializada en música urbana y ediciones limitadas...",
+      rating: 5,
+      tags: "metal, rock, gotico, instrumentos",
+      imagePath: "assets/Totem.png",
+      description: "Especialistas en sonidos oscuros y metal. También vendemos instrumentos.",
     ),
   ];
 
@@ -54,11 +62,10 @@ class _StoreListPageState extends State<StoreListPage> {
   @override
   void initState() {
     super.initState();
-    // Al principio, mostramos todas
     _foundStores = _allStores;
   }
 
-  // --- LÓGICA DE BÚSQUEDA ---
+  // --- LÓGICA DE BÚSQUEDA (TUYA ORIGINAL) ---
   void _runFilter(String enteredKeyword) {
     List<Store> results = [];
     if (enteredKeyword.isEmpty) {
@@ -71,7 +78,6 @@ class _StoreListPageState extends State<StoreListPage> {
           .toList();
     }
 
-    // Actualizamos la UI
     setState(() {
       _foundStores = results;
     });
@@ -80,15 +86,15 @@ class _StoreListPageState extends State<StoreListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppBar(nombreUsuario: widget.nombreUsuario),
+      appBar: MyAppBar(nombreUsuario: widget.nombreUsuario, userId: widget.userId),
       backgroundColor: const Color(0xFF800000),
       body: Column(
         children: [
-          // --- BUSCADOR INTERACTIVO ---
+          // --- BUSCADOR INTERACTIVO (TUYO ORIGINAL) ---
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-              onChanged: (value) => _runFilter(value), // <-- Llama al filtro
+              onChanged: (value) => _runFilter(value),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
@@ -123,17 +129,17 @@ class _StoreListPageState extends State<StoreListPage> {
     );
   }
 
-  // --- DISEÑO DE LA TARJETA ---
+  // --- DISEÑO DE LA TARJETA (TUYO ORIGINAL) ---
   Widget _buildStoreCard(Store store) {
-    return GestureDetector( // <-- AÑADIDO: Detectar clic en la tarjeta
+    return GestureDetector(
       onTap: () {
-        // Navegar a la pantalla de información de la tienda
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => InfoTiendaScreen(
               store: store,
               nombreUsuario: widget.nombreUsuario,
+              userId: widget.userId, // Pasamos el ID del usuario
             ),
           ),
         );
@@ -151,12 +157,11 @@ class _StoreListPageState extends State<StoreListPage> {
                 children: [
                   Image.asset(
                     store.imagePath,
-                    height: 120, // Altura fija para uniformidad
+                    height: 120,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (c, e, s) => Container(height: 120, color: Colors.grey),
                   ),
-                  // Puntos decorativos
                   Positioned(
                     bottom: 8.0,
                     child: Row(
