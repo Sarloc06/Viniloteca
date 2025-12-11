@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:viniloteca/login_screen.dart'; // Para navegar a Login
-import 'tiendas.dart'; // Importa la página de tiendas
+import 'package:viniloteca/login_screen.dart';
+import 'tiendas.dart'; 
 import 'foros.dart';
 
-// --- WIDGET DE LA CABECERA (ACTUALIZADO) ---
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   
   final String? nombreUsuario;
@@ -43,7 +42,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
             
-            // 2. LOGO CENTRAL (logo.png)
+            // 2. LOGO CENTRAL
             Expanded(
               flex: 2,
               child: GestureDetector(
@@ -67,7 +66,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
 
-            // --- 3. ICONO DE PERFIL (DINÁMICO) ---
+            //3. ICONO DE PERFIL
             (nombreUsuario == null)
               ? _buildLoginIcon(context)
               : _buildProfileMenu(context, nombreUsuario!),
@@ -77,7 +76,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // WIDGET PARA INVITADO
   Widget _buildLoginIcon(BuildContext context) {
     return Expanded(
       flex: 1,
@@ -97,7 +95,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // WIDGET PARA USUARIO LOGUEADO
   Widget _buildProfileMenu(BuildContext context, String nombre) {
     return Expanded(
       flex: 1,
@@ -138,8 +135,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(100.0); 
 }
 
-
-// --- PANTALLA PRINCIPAL (ACTUALIZADA) ---
 class HomeScreen extends StatelessWidget {
   
   final String? nombreUsuario;
@@ -184,12 +179,12 @@ class HomeScreen extends StatelessWidget {
                 context: context, 
                 label: 'FOROS',
                 imagePath: 'assets/imagenFondo1.png',                
-                // --- AQUÍ ESTÁ EL CAMBIO ---
+ 
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      // Pasamos el nombreUsuario para mantener la sesión en la cabecera
+                      
                       builder: (context) => ForumListPage(nombreUsuario: nombreUsuario),
                     ),
                   );
@@ -203,7 +198,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- WIDGET REUTILIZABLE PARA LAS TARJETAS ---
   Widget _buildMenuCard({
     required BuildContext context, 
     required String label,

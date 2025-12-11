@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; // Para hacer peticiones
-import 'dart:convert';                   // Para JSON
+import 'package:http/http.dart' as http;
+import 'dart:convert';                   
 import 'package:viniloteca/home_screen.dart';
 import 'package:viniloteca/register_screen.dart'; 
 
@@ -14,10 +14,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   // URL para la app corriendo en CHROME
   final String apiUrl = "http://localhost:3000/login";
-  // (Recuerda usar "http://10.0.2.2:3000/login" si pruebas en Emulador Android)
+  
 
   void _login() async {
     final String email = _emailController.text.trim();
@@ -46,10 +45,8 @@ class _LoginScreenState extends State<LoginScreen> {
         final Map<String, dynamic> res = jsonDecode(response.body);
 
         if (res['success'] == true) {
-          // --- ¡ÉXITO! ---
           // 1. Coge el nombre de usuario de la respuesta de la API
           final String nombreUsuario = res['data']['nombre'] ?? 'Usuario';
-
           // 2. Navega a HomeScreen y pasa el nombre
           Navigator.pushReplacement(
             context,
@@ -116,7 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-              // Usa el mismo logo que la HomeScreen
               Image.asset(
                 'assets/logo.png', 
                 height: 100,

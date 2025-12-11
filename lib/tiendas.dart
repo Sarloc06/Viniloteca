@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart'; // Importa donde tengas tu MyAppBar
+import 'InfoTiendaScreen.dart'; // <-- IMPORTANTE: Para navegar al detalle
 
 // 1. MODELO DE DATOS (La estructura de una tienda)
 class Store {
@@ -44,13 +45,6 @@ class _StoreListPageState extends State<StoreListPage> {
       tags: "hip hop, rap, urban, moderno",
       imagePath: "assets/store2.png",
       description: "Tienda especializada en música urbana y ediciones limitadas...",
-    ),
-    Store(
-      title: "Discos Paco",
-      rating: 5,
-      tags: "flamenco, rock español, zarzuela",
-      imagePath: "assets/imagen.png", // Usando una genérica como ejemplo
-      description: "La mejor colección de música nacional desde 1980.",
     ),
   ];
 
@@ -131,83 +125,97 @@ class _StoreListPageState extends State<StoreListPage> {
 
   // --- DISEÑO DE LA TARJETA ---
   Widget _buildStoreCard(Store store) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagen
-          Expanded(
-            flex: 2,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Image.asset(
-                  store.imagePath,
-                  height: 120, // Altura fija para uniformidad
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Container(height: 120, color: Colors.grey),
-                ),
-                // Puntos decorativos
-                Positioned(
-                  bottom: 8.0,
-                  child: Row(
-                    children: List.generate(4, (index) => _buildDot(index == 0)),
-                  ),
-                ),
-              ],
+    return GestureDetector( // <-- AÑADIDO: Detectar clic en la tarjeta
+      onTap: () {
+        // Navegar a la pantalla de información de la tienda
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => InfoTiendaScreen(
+              store: store,
+              nombreUsuario: widget.nombreUsuario,
             ),
           ),
-          // Info
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen
+            Expanded(
+              flex: 2,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
                 children: [
-                  Text(
-                    store.title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20),
+                  Image.asset(
+                    store.imagePath,
+                    height: 120, // Altura fija para uniformidad
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => Container(height: 120, color: Colors.grey),
                   ),
-                  Row(
-                    children: [
-                      ...List.generate(5, (index) {
-                        return Icon(
-                          index < store.rating ? Icons.star : Icons.star_border,
-                          color: Colors.yellow,
-                          size: 18,
-                        );
-                      }),
-                      const SizedBox(width: 5),
-                      Text("${store.rating}/5",
-                          style: const TextStyle(color: Colors.white70)),
-                    ],
-                  ),
-                  Text(
-                    store.tags,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    store.description,
-                    style: const TextStyle(color: Colors.white, fontSize: 11),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                  // Puntos decorativos
+                  Positioned(
+                    bottom: 8.0,
+                    child: Row(
+                      children: List.generate(4, (index) => _buildDot(index == 0)),
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            // Info
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20),
+                    ),
+                    Row(
+                      children: [
+                        ...List.generate(5, (index) {
+                          return Icon(
+                            index < store.rating ? Icons.star : Icons.star_border,
+                            color: Colors.yellow,
+                            size: 18,
+                          );
+                        }),
+                        const SizedBox(width: 5),
+                        Text("${store.rating}/5",
+                            style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                    Text(
+                      store.tags,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      store.description,
+                      style: const TextStyle(color: Colors.white, fontSize: 11),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

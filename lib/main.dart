@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:viniloteca/home_screen.dart'; // Importa la pantalla principal
+import 'package:viniloteca/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +16,6 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.red,
       ),
-      // Arrancamos en la HomeScreen (como "invitado")
       home: const HomeScreen(),
     );
   }

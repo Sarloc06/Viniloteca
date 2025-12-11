@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart'; // Importa MyAppBar
+import 'home_screen.dart';
 
 // 1. MODELO DE DATOS
 class ForumPost {
@@ -28,7 +28,7 @@ class ForumPost {
 
 // 2. PANTALLA PRINCIPAL
 class ForumListPage extends StatefulWidget {
-  final String? nombreUsuario; // Si es null, es invitado
+  final String? nombreUsuario;
 
   const ForumListPage({super.key, this.nombreUsuario});
 
@@ -37,8 +37,7 @@ class ForumListPage extends StatefulWidget {
 }
 
 class _ForumListPageState extends State<ForumListPage> {
-  
-  // --- LISTA VACÍA (SIN EJEMPLOS) ---
+
   final List<ForumPost> _allPosts = []; 
   
   List<ForumPost> _foundPosts = [];
@@ -49,9 +48,6 @@ class _ForumListPageState extends State<ForumListPage> {
     super.initState();
     _foundPosts = _allPosts;
   }
-
-  // --- VERIFICACIÓN DE SEGURIDAD ---
-  // Retorna true si está logueado, false si es invitado (y muestra mensaje)
   bool _verificarSesion() {
     if (widget.nombreUsuario == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,8 +61,7 @@ class _ForumListPageState extends State<ForumListPage> {
     }
     return true;
   }
-
-  // --- LÓGICA DE BÚSQUEDA ---
+  //LÓGICA DE BÚSQUEDA
   void _runFilter(String keyword) {
     List<ForumPost> results = [];
     if (keyword.isEmpty) {
@@ -83,17 +78,16 @@ class _ForumListPageState extends State<ForumListPage> {
     });
   }
 
-  // --- AÑADIR NUEVO TEMA ---
+  //AÑADIR NUEVO TEMA
   void _addNewTopic(String title) {
-    // Obtenemos la fecha actual
     final now = DateTime.now();
     final dateString = "${now.day}/${now.month}/${now.year}";
 
     final newPost = ForumPost(
       title: title,
-      user: widget.nombreUsuario!, // Usamos el usuario real
+      user: widget.nombreUsuario!,
       tags: "nuevo, comunidad",
-      imagePath: "assets/logo.png", // Imagen por defecto
+      imagePath: "assets/logo.png",
       dateFI: dateString,
       dateUC: dateString,
       likes: 0,
@@ -101,14 +95,13 @@ class _ForumListPageState extends State<ForumListPage> {
     );
 
     setState(() {
-      _allPosts.insert(0, newPost); // Añadir al principio de la lista
-      _runFilter(_searchController.text); // Actualizar vista
+      _allPosts.insert(0, newPost); 
+      _runFilter(_searchController.text);
     });
   }
 
-  // --- DIÁLOGO PARA CREAR TEMA ---
+  //DIÁLOGO PARA CREAR TEMA
   void _showAddTopicDialog() {
-    // 1. Primero verificamos si está logueado
     if (!_verificarSesion()) return;
 
     final titleController = TextEditingController();
@@ -161,8 +154,6 @@ class _ForumListPageState extends State<ForumListPage> {
       body: Column(
         children: [
           const SizedBox(height: 20),
-          
-          // BARRA DE BÚSQUEDA
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Container(
@@ -181,12 +172,10 @@ class _ForumListPageState extends State<ForumListPage> {
               ),
             ),
           ),
-
-          // BOTÓN NUEVO TEMA (INTERACTIVO Y PROTEGIDO)
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
-              onTap: _showAddTopicDialog, // <-- Verifica sesión dentro de la función
+              onTap: _showAddTopicDialog,
               child: Container(
                 margin: const EdgeInsets.only(top: 15, right: 20, bottom: 5),
                 padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
@@ -204,7 +193,7 @@ class _ForumListPageState extends State<ForumListPage> {
             child: _foundPosts.isEmpty
               ? const Center(
                   child: Text(
-                    "No hay temas aún.\n¡Sé el primero en publicar!",
+                    "No hay temas aún.¡Sé el primero en publicar!",
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white70, fontSize: 18),
                   ),
@@ -265,8 +254,7 @@ class _ForumListPageState extends State<ForumListPage> {
                         Text('UC: ${post.dateUC}', style: const TextStyle(fontSize: 10)),
                       ],
                     ),
-                    
-                    // ICONOS DE INTERACCIÓN (PROTEGIDOS)
+                    // ICONOS DE INTERACCIÓN
                     Row(
                       children: [
                         // Corazón
@@ -283,7 +271,6 @@ class _ForumListPageState extends State<ForumListPage> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        
                         // Like
                         InkWell(
                           onTap: () {
@@ -299,7 +286,6 @@ class _ForumListPageState extends State<ForumListPage> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        
                         // Dislike
                         InkWell(
                           onTap: () {
