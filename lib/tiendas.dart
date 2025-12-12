@@ -1,29 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http; // IMPORTANTE
+import 'dart:convert'; // IMPORTANTE
+import 'package:flutter/foundation.dart'; // Para detectar Web/Móvil
 import 'home_screen.dart'; 
 import 'InfoTiendaScreen.dart'; 
 
-// 1. MODELO DE DATOS
-// He añadido 'final int id' para que la base de datos funcione.
-// Visualmente no cambia nada.
 class Store {
-  final int id; // <--- NECESARIO PARA LA BASE DE DATOS
+  final int id;
   final String title;
   final int rating;
   final String tags;
   final String imagePath;
   final String description;
+  final String location; // <--- 1. AÑADIMOS ESTO
 
   Store({
-    required this.id, // <--- AHORA REQUERIDO
+    required this.id,
     required this.title,
     required this.rating,
     required this.tags,
     required this.imagePath,
     required this.description,
+    required this.location, // <--- 2. AÑADIMOS ESTO
   });
+
+  factory Store.fromJson(Map<String, dynamic> json) {
+    return Store(
+      id: json['id'],
+      title: json['title'] ?? 'Sin nombre',
+      rating: json['rating'] ?? 0,
+      tags: json['tags'] ?? '',
+      imagePath: json['imagePath'] ?? 'assets/logo.png',
+      description: json['description'] ?? '',
+      location: json['location'] ?? 'Dirección no disponible', // <--- 3. AÑADIMOS ESTO
+    );
+  }
 }
 
-// 2. PANTALLA CON ESTADO
 class StoreListPage extends StatefulWidget {
   final String? nombreUsuario;
   final int? userId; 
@@ -35,37 +48,47 @@ class StoreListPage extends StatefulWidget {
 }
 
 class _StoreListPageState extends State<StoreListPage> {
-  // --- TUS DATOS ---
-  // He añadido el ID a cada tienda. Asegúrate de que coincida con tu Base de Datos.
-  final List<Store> _allStores = [
-    Store(
-      id: 1, // <--- ID 1 (Base de Datos)
-      title: "Latimore Records",
-      rating: 3,
-      tags: "pop, rock, indie, vinilos, clásicos",
-      imagePath: "assets/Latimore.jpg",
-      description: "Una tienda clásica en el corazón de la ciudad con una gran colección de vinilos vintage.",
-    ),
-    Store(
-      id: 2, // <--- ID 2 (Base de Datos)
-      title: "TotemTanz",
-      rating: 5,
-      tags: "metal, rock, gotico, instrumentos",
-      imagePath: "assets/Totem.png",
-      description: "Especialistas en sonidos oscuros y metal. También vendemos instrumentos.",
-    ),
-  ];
+  
+  // URL Dinámica
+  String get baseUrl {
+    if (kIsWeb) return "http://localhost:3000";
+    return "http://10.0.2.2:3000";
+  }
 
-  // Lista que se muestra (filtrada)
+  List<Store> _allStores = []; // Empezamos con lista vacía
   List<Store> _foundStores = [];
+  bool _isLoading = true; // Para mostrar carga
 
   @override
   void initState() {
     super.initState();
-    _foundStores = _allStores;
+    _fetchStores(); // Llamamos a la base de datos al iniciar
   }
 
-  // --- LÓGICA DE BÚSQUEDA (TUYA ORIGINAL) ---
+  // --- PETICIÓN A LA BASE DE DATOS ---
+  Future<void> _fetchStores() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/stores'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          final List<dynamic> storesJson = data['data'];
+          setState(() {
+            _allStores = storesJson.map((json) => Store.fromJson(json)).toList();
+            _foundStores = _allStores;
+            _isLoading = false;
+          });
+        }
+      } else {
+        print("Error servidor: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error de conexión: $e");
+      setState(() => _isLoading = false);
+    }
+  }
+
   void _runFilter(String enteredKeyword) {
     List<Store> results = [];
     if (enteredKeyword.isEmpty) {
@@ -77,7 +100,6 @@ class _StoreListPageState extends State<StoreListPage> {
               store.tags.toLowerCase().contains(enteredKeyword.toLowerCase()))
           .toList();
     }
-
     setState(() {
       _foundStores = results;
     });
@@ -90,7 +112,6 @@ class _StoreListPageState extends State<StoreListPage> {
       backgroundColor: const Color(0xFF800000),
       body: Column(
         children: [
-          // --- BUSCADOR INTERACTIVO (TUYO ORIGINAL) ---
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -108,28 +129,30 @@ class _StoreListPageState extends State<StoreListPage> {
             ),
           ),
 
-          // --- LISTA DE TIENDAS ---
+          // LISTA DE TIENDAS O CARGA
           Expanded(
-            child: _foundStores.isNotEmpty
-                ? ListView.builder(
-                    itemCount: _foundStores.length,
-                    itemBuilder: (context, index) {
-                      return _buildStoreCard(_foundStores[index]);
-                    },
-                  )
-                : const Center(
-                    child: Text(
-                      'No se encontraron tiendas',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  ),
+            child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                : _foundStores.isNotEmpty
+                    ? ListView.builder(
+                        itemCount: _foundStores.length,
+                        itemBuilder: (context, index) {
+                          return _buildStoreCard(_foundStores[index]);
+                        },
+                      )
+                    : const Center(
+                        child: Text(
+                          'No se encontraron tiendas',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      ),
           ),
         ],
       ),
     );
   }
 
-  // --- DISEÑO DE LA TARJETA (TUYO ORIGINAL) ---
+  // --- TU DISEÑO ORIGINAL (SIN CAMBIOS) ---
   Widget _buildStoreCard(Store store) {
     return GestureDetector(
       onTap: () {
@@ -139,7 +162,7 @@ class _StoreListPageState extends State<StoreListPage> {
             builder: (context) => InfoTiendaScreen(
               store: store,
               nombreUsuario: widget.nombreUsuario,
-              userId: widget.userId, // Pasamos el ID del usuario
+              userId: widget.userId,
             ),
           ),
         );
@@ -149,18 +172,19 @@ class _StoreListPageState extends State<StoreListPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen
             Expanded(
               flex: 2,
               child: Stack(
                 alignment: Alignment.bottomCenter,
                 children: [
+                  // IMPORTANTE: Aquí puedes usar Image.asset si guardas las rutas locales 
+                  // o Image.network si las imágenes están en internet
                   Image.asset(
                     store.imagePath,
                     height: 120,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) => Container(height: 120, color: Colors.grey),
+                    errorBuilder: (c, e, s) => Container(height: 120, color: Colors.grey, child: const Icon(Icons.store)),
                   ),
                   Positioned(
                     bottom: 8.0,
@@ -171,7 +195,6 @@ class _StoreListPageState extends State<StoreListPage> {
                 ],
               ),
             ),
-            // Info
             Expanded(
               flex: 3,
               child: Padding(

@@ -314,7 +314,11 @@ class _InfoTiendaScreenState extends State<InfoTiendaScreen> {
                     ],
                   ),
                   
-                  const Text("C. Amor de Dios, 66, Casco Antiguo, 41002 Sevilla", style: TextStyle(fontSize: 14, color: Colors.black87)),
+                  // Quitamos el 'const' porque ahora el valor puede cambiar
+                  Text(
+                    widget.store.location, // <--- AHORA LEE DE LA BASE DE DATOS
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
                   const SizedBox(height: 15),
 
                   Container(

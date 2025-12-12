@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
         cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const uniqueSuffix = Date.now() + '-' + Math.round(unirandom = Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
@@ -45,15 +45,15 @@ db.connect(err => {
         console.log('✅ Conectado a MySQL.');
         
         // --- AUTO-CREACIÓN DE TABLA DE RESEÑAS ---
-        // Esto crea la tabla automáticamente si no la tienes
         const createTableQuery = `
             CREATE TABLE IF NOT EXISTS RESENAS (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                tienda VARCHAR(100),
-                usuario VARCHAR(100),
+                id_tienda INT,
+                id_usuario INT,
                 texto TEXT,
-                rating INT,
-                fecha VARCHAR(50)
+                valoracion INT,
+                likes INT DEFAULT 0,
+                dislikes INT DEFAULT 0
             )
         `;
         db.query(createTableQuery, (err, result) => {
@@ -127,7 +127,6 @@ app.post('/login', (req, res) => {
 //           RUTAS DE PERFIL
 // ==========================================
 
-// 3. OBTENER PERFIL
 app.get('/profile', (req, res) => {
     const userId = req.query.id;
     if (!userId) return res.json({ success: false, message: "ID requerido" });
@@ -155,7 +154,6 @@ app.get('/profile', (req, res) => {
     });
 });
 
-// 4. ACTUALIZAR DESCRIPCIÓN
 app.post('/update_description', (req, res) => {
     const { id_usuario, descripcion } = req.body;
     const sql = "UPDATE USUARIO SET descripcion = ? WHERE id_usuario = ?";
@@ -165,7 +163,6 @@ app.post('/update_description', (req, res) => {
     });
 });
 
-// 5. SUBIR FOTO DE PERFIL
 app.post('/upload_profile_picture', upload.single('image'), (req, res) => {
     const { id_usuario, token } = req.body;
     const file = req.file;
@@ -206,45 +203,46 @@ app.post('/upload_profile_picture', upload.single('image'), (req, res) => {
 });
 
 // ==========================================
-//        RUTAS DE RESEÑAS (NUEVO)
+//           RUTAS DE TIENDAS (AÑADIDO)
 // ==========================================
 
-// 6. OBTENER RESEÑAS
-app.get('/reviews', (req, res) => {
-    // 1. Recibimos el ID de la tienda (ej: 1)
-    const idTienda = req.query.id_tienda; 
-
-    // 2. CORRECCIÓN: Cambiamos 'WHERE tienda = ?' por 'WHERE id_tienda = ?'
-    // Quitamos el 'ORDER BY id DESC' para que no falle
-const sql = "SELECT * FROM RESENAS WHERE id_tienda = ?";
-
-    db.query(sql, [idTienda], (err, result) => {
-        if (err) {
-            console.log("Error: " + err); // Para ver el error en consola si pasa algo
-            res.status(500).send({ success: false, message: 'Error' });
-        } else {
-            res.send({ success: true, data: result });
-        }
+app.get('/stores', (req, res) => {
+    const sql = `
+        SELECT 
+            id_tienda AS id, 
+            nombre AS title, 
+            4 AS rating, 
+            'vinilos, música, tienda' AS tags, 
+            ruta_foto AS imagePath, 
+            descripcion AS description,
+            localizacion AS location -- <--- AÑADIMOS ESTO
+        FROM TIENDA
+    `;
+    db.query(sql, (err, result) => {
+        if (err) return res.json({ success: false, message: err.message });
+        res.json({ success: true, data: result });
     });
 });
 
-// 7. GUARDAR RESEÑA
+// ==========================================
+//           RUTAS DE RESEÑAS 
+// ==========================================
+
+app.get('/reviews', (req, res) => {
+    const idTienda = req.query.id_tienda; 
+    const sql = "SELECT * FROM RESENAS WHERE id_tienda = ?";
+    db.query(sql, [idTienda], (err, result) => {
+        if (err) return res.status(500).send({ success: false, message: 'Error' });
+        res.send({ success: true, data: result });
+    });
+});
+
 app.post('/add_review', (req, res) => {
-    // 1. Recibimos los datos (asegúrate de que Flutter envía estos nombres)
     const { id_tienda, id_usuario, text, rating } = req.body;
-
-    console.log("Intentando guardar reseña:", req.body); // Chivato para ver qué llega
-
-    // 2. CONSULTA SQL ACTUALIZADA
     const sql = "INSERT INTO RESENAS (id_tienda, id_usuario, texto, valoracion, likes, dislikes) VALUES (?, ?, ?, ?, 0, 0)";
-
     db.query(sql, [id_tienda, id_usuario, text, rating], (err, result) => {
-        if (err) {
-            console.log("Error SQL:", err);
-            res.status(500).send({ message: 'Error al guardar en BD' });
-        } else {
-            res.send({ success: true, message: 'Reseña guardada correctamente' });
-        }
+        if (err) return res.status(500).send({ message: 'Error al guardar en BD' });
+        res.send({ success: true, message: 'Reseña guardada correctamente' });
     });
 });
 
